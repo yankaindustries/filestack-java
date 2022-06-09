@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /** Uploads new files. */
@@ -62,43 +63,45 @@ public class Client implements Serializable {
 
   /**
    * Synchronously uploads a file system path using default storage options.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
   public FileLink upload(String path, boolean intel) throws IOException {
-    return upload(path, intel, null);
+    return upload(path, intel, null, null);
   }
 
   /**
    * Synchronously uploads a file system path.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
-  public FileLink upload(String path, boolean intel, @Nullable StorageOptions opts) throws IOException {
-    return uploadAsync(path, intel, opts).blockingLast().getData();
+  public FileLink upload(String path, boolean intel, @Nullable StorageOptions opts,
+                         @Nullable Map<String, String> uploadTags) throws IOException {
+    return uploadAsync(path, intel, opts, uploadTags).blockingLast().getData();
   }
 
   /**
    * Synchronously uploads an {@link InputStream} using default storage options.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
   public FileLink upload(InputStream input, int size, boolean intel) throws IOException {
-    return upload(input, size, intel, null);
+    return upload(input, size, intel, null, null);
   }
 
   /**
    * Synchronously uploads an {@link InputStream}.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
-  public FileLink upload(InputStream input, int size, boolean intel, @Nullable StorageOptions opts)
+  public FileLink upload(InputStream input, int size, boolean intel, @Nullable StorageOptions opts,
+                         @Nullable Map<String, String> uploadTags)
       throws IOException {
-    return uploadAsync(input, size, intel, opts).blockingLast().getData();
+    return uploadAsync(input, size, intel, opts, uploadTags).blockingLast().getData();
   }
 
   /**
@@ -229,21 +232,26 @@ public class Client implements Serializable {
 
   /**
    * Asynchronously uploads a file system path using default storage options.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
   public Flowable<Progress<FileLink>> uploadAsync(String path, boolean intelligent) {
-    return uploadAsync(path, intelligent, null);
+    return uploadAsync(path, intelligent, null, null);
   }
 
   /**
    * Asynchronously uploads a file system path.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
-  public Flowable<Progress<FileLink>> uploadAsync(String path, boolean intel, @Nullable StorageOptions opts) {
+  public Flowable<Progress<FileLink>> uploadAsync(
+          String path,
+          boolean intel,
+          @Nullable StorageOptions opts,
+          @Nullable Map<String, String> uploadTags
+  ) {
     try {
       File inputFile = Util.createReadFile(path);
       InputStream inputStream = new FileInputStream(inputFile);
@@ -254,7 +262,7 @@ public class Client implements Serializable {
         opts = opts.newBuilder().filename(inputFile.getName()).build();
       }
 
-      return uploadAsync(inputStream, (int) inputFile.length(), intel, opts);
+      return uploadAsync(inputStream, (int) inputFile.length(), intel, opts, uploadTags);
     } catch (IOException e) {
       return Flowable.error(e);
     }
@@ -262,12 +270,12 @@ public class Client implements Serializable {
 
   /**
    * Asynchronously uploads an {@link InputStream} using default storage options.
-   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions)}.
+   * Wraps {@link #uploadAsync(InputStream, int, boolean, StorageOptions, Map)}.
    *
-   * @see #uploadAsync(InputStream, int, boolean, StorageOptions)
+   * @see #uploadAsync(InputStream, int, boolean, StorageOptions, Map)
    */
   public Flowable<Progress<FileLink>> uploadAsync(InputStream input, int size, boolean intel) {
-    return uploadAsync(input, size, intel, null);
+    return uploadAsync(input, size, intel, null, null);
   }
 
   /**
@@ -288,12 +296,13 @@ public class Client implements Serializable {
    * @param opts  storage options, https://www.filestack.com/docs/rest-api/store
    */
   public Flowable<Progress<FileLink>> uploadAsync(
-      InputStream input, int size, boolean intel, @Nullable StorageOptions opts) {
+      InputStream input, int size, boolean intel, @Nullable StorageOptions opts,
+      @Nullable Map<String, String> uploadTags) {
     if (opts == null) {
       opts = new StorageOptions.Builder().build();
     }
 
-    Upload upload = new Upload(config, uploadService, input, size, intel, opts);
+    Upload upload = new Upload(config, uploadService, input, size, intel, opts, uploadTags);
     return upload.run();
   }
 

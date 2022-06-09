@@ -32,7 +32,7 @@ public class UploadStartFunc implements Callable<Prog> {
 
     StartResponse response = func.call();
 
-    upload.baseParams.putAll(response.getUploadParams());
+    response.getUploadParams().forEach(upload.baseParams::addProperty);
 
     if (upload.intel) {
       upload.intel = response.isIntelligent();

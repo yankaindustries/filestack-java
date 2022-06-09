@@ -23,7 +23,7 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 group = 'com.filestack'
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 version = file(new File('VERSION')).text.trim() // Get version string from VERSION text file
 
 dependencies {
@@ -44,9 +44,9 @@ dependencies {
 
 // Add generated build-config directories to the main source set, so that the
 // IDE doesn't complain when the app references BuildConfig classes
-sourceSets.main.java {
-    srcDir new File(buildDir, 'gen/buildconfig')
-}
+//sourceSets.main.java {
+//    srcDir new File(buildDir, 'gen/buildconfig')
+//}
 
 buildConfig {
     version = project.version // sets value of VERSION field,

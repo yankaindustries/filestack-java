@@ -4,15 +4,15 @@ import com.filestack.Config;
 import com.filestack.FileLink;
 import com.filestack.Progress;
 import com.filestack.StorageOptions;
+import com.google.gson.JsonObject;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.MediaType;
-import okhttp3.RequestBody;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 /** Holds upload state and request logic. */
@@ -34,9 +34,10 @@ public class Upload {
   // Not bothering with getters / setters for these
   boolean intel;
   int partSize;
-  Map<String, RequestBody> baseParams;
+  JsonObject baseParams;
   MediaType mediaType;
   String[] etags;
+  Map<String, String> uploadTags;
 
   // Access to these is controlled and synchronized
   private final InputStream input;
@@ -45,7 +46,7 @@ public class Upload {
 
   /** Constructs new instance. */
   public Upload(Config clientConf, UploadService uploadService, InputStream input, int inputSize, boolean intel,
-                StorageOptions storeOpts) {
+                StorageOptions storeOpts, Map<String, String> uploadTags) {
     this.clientConf = clientConf;
     this.uploadService = uploadService;
     this.input = input;
@@ -53,12 +54,15 @@ public class Upload {
     this.intel = intel;
     this.partIndex = 1;
     this.chunkSize = INITIAL_CHUNK_SIZE;
+    this.uploadTags = uploadTags;
 
     // Setup base parameters that get used repeatedly for backend requests
-    baseParams = new HashMap<>();
-    baseParams.putAll(storeOpts.getAsPartMap());
-    baseParams.put("apikey", Util.createStringPart(clientConf.getApiKey()));
-    baseParams.put("size", Util.createStringPart(Integer.toString(inputSize)));
+    baseParams = new JsonObject();
+    baseParams.add("store", storeOpts.getAsPartMap());
+    baseParams.addProperty("filename", storeOpts.getFilename());
+    baseParams.addProperty("mimetype", storeOpts.getMimeType());
+    baseParams.addProperty("apikey", clientConf.getApiKey());
+    baseParams.addProperty("size", inputSize);
 
     // Key name is a misnomer, all uploads are multipart, this is for "intelligent" uploads
     // If the account doesn't support it, we'll fall back to regular multipart after start request
@@ -67,12 +71,12 @@ public class Upload {
     // If it's set by default, the account supports it, and it's removed *after* the call to start,
     // uploads <= a the regular part size will fail
     if (intel) {
-      baseParams.put("multipart", Util.createStringPart("true"));
+      baseParams.addProperty("multipart", true);
     }
 
     if (clientConf.hasSecurity()) {
-      baseParams.put("policy", Util.createStringPart(clientConf.getPolicy()));
-      baseParams.put("signature", Util.createStringPart(clientConf.getSignature()));
+      baseParams.addProperty("policy", clientConf.getPolicy());
+      baseParams.addProperty("signature", clientConf.getSignature());
     }
 
     // This needs to be called after "getAsPartMap"
