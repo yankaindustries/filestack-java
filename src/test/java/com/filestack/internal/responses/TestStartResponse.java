@@ -23,7 +23,7 @@ public class TestStartResponse {
         + "}";
 
     StartResponse response = gson.fromJson(jsonString, StartResponse.class);
-    Map<String, RequestBody> params = response.getUploadParams();
+    Map<String, String> params = response.getUploadParams();
 
     Assert.assertTrue(params.containsKey("uri"));
     Assert.assertTrue(params.containsKey("region"));

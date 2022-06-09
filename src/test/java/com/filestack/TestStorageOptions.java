@@ -1,9 +1,8 @@
 package com.filestack;
 
-import com.filestack.internal.Util;
+import com.google.gson.JsonObject;
+
 import java.io.IOException;
-import java.util.Map;
-import okhttp3.RequestBody;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,21 +42,21 @@ public class TestStorageOptions {
         .region("<region>")
         .build();
 
-    Map<String, RequestBody> map = options.getAsPartMap();
+    JsonObject map = options.getAsPartMap();
 
-    Assert.assertEquals("<access>", Util.partToString(map.get("store_access")));
-    Assert.assertEquals("<container>", Util.partToString(map.get("store_container")));
-    Assert.assertEquals("<location>", Util.partToString(map.get("store_location")));
-    Assert.assertEquals("<path>", Util.partToString(map.get("store_path")));
-    Assert.assertEquals("<region>", Util.partToString(map.get("store_region")));
+    Assert.assertEquals("<access>", map.getAsJsonPrimitive("store_access").getAsString());
+    Assert.assertEquals("<container>", map.getAsJsonPrimitive("store_container").getAsString());
+    Assert.assertEquals("<location>", map.getAsJsonPrimitive("store_location").getAsString());
+    Assert.assertEquals("<path>", map.getAsJsonPrimitive("store_path").getAsString());
+    Assert.assertEquals("<region>", map.getAsJsonPrimitive("store_region").getAsString());
   }
 
   @Test
   public void testGetPartMapLocationDefault() throws Exception {
     StorageOptions options = new StorageOptions.Builder().build();
 
-    Map<String, RequestBody> map = options.getAsPartMap();
+    JsonObject map = options.getAsPartMap();
 
-    Assert.assertEquals("s3", Util.partToString(map.get("store_location")));
+    Assert.assertEquals("s3", map.getAsJsonPrimitive("store_location").getAsString());
   }
 }

@@ -3,8 +3,11 @@ package com.filestack.internal;
 import com.filestack.internal.responses.CompleteResponse;
 import com.filestack.internal.responses.StartResponse;
 import com.filestack.internal.responses.UploadResponse;
+import com.google.gson.JsonObject;
+
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -28,7 +31,7 @@ public class UploadService {
     this.apiUrl = url;
   }
 
-  public Response<StartResponse> start(Map<String, RequestBody> parameters) throws IOException {
+  public Response<StartResponse> start(JsonObject parameters) throws IOException {
     HttpUrl url = apiUrl.newBuilder()
         .addPathSegment("multipart")
         .addPathSegment("start")
@@ -36,13 +39,13 @@ public class UploadService {
 
     Request request = new Request.Builder()
         .url(url)
-        .post(buildMultipartBody(parameters))
+        .post(buildJsonBody(parameters))
         .build();
 
     return networkClient.call(request, StartResponse.class);
   }
 
-  public Response<UploadResponse> upload(Map<String, RequestBody> parameters) throws IOException {
+  public Response<UploadResponse> upload(JsonObject parameters) throws IOException {
     HttpUrl url = apiUrl.newBuilder()
         .addPathSegment("multipart")
         .addPathSegment("upload")
@@ -50,7 +53,7 @@ public class UploadService {
 
     Request request = new Request.Builder()
         .url(url)
-        .post(buildMultipartBody(parameters))
+        .post(buildJsonBody(parameters))
         .build();
 
     return networkClient.call(request, UploadResponse.class);
@@ -76,7 +79,7 @@ public class UploadService {
     return networkClient.call(request);
   }
 
-  public Response<ResponseBody> commit(Map<String, RequestBody> parameters) throws IOException {
+  public Response<ResponseBody> commit(JsonObject parameters) throws IOException {
     HttpUrl url = apiUrl.newBuilder()
         .addPathSegment("multipart")
         .addPathSegment("commit")
@@ -84,13 +87,13 @@ public class UploadService {
 
     Request request = new Request.Builder()
         .url(url)
-        .post(buildMultipartBody(parameters))
+        .post(buildJsonBody(parameters))
         .build();
 
     return networkClient.call(request);
   }
 
-  public Response<CompleteResponse> complete(Map<String, RequestBody> parameters) throws IOException {
+  public Response<CompleteResponse> complete(JsonObject parameters) throws IOException {
     HttpUrl url = apiUrl.newBuilder()
         .addPathSegment("multipart")
         .addPathSegment("complete")
@@ -98,11 +101,15 @@ public class UploadService {
 
     Request request = new Request.Builder()
         .url(url)
-        .post(buildMultipartBody(parameters))
+        .post(buildJsonBody(parameters))
         .build();
 
     return networkClient.call(request, CompleteResponse.class);
 
+  }
+
+  private RequestBody buildJsonBody(JsonObject parameters) {
+    return RequestBody.create(MediaType.get("application/json"), parameters.toString());
   }
 
   private MultipartBody buildMultipartBody(Map<String, RequestBody> parameters) {

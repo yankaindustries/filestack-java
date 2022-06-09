@@ -1,6 +1,7 @@
 package com.filestack.internal.responses;
 
 import com.filestack.internal.Util;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,11 +22,11 @@ public class StartResponse {
   /**
    * Return {@link Map} of params needed for subsequent multipart calls. For convenience.
    */
-  public Map<String, RequestBody> getUploadParams() {
-    HashMap<String, RequestBody> parameters = new HashMap<>();
-    parameters.put("uri", Util.createStringPart(uri));
-    parameters.put("region", Util.createStringPart(region));
-    parameters.put("upload_id", Util.createStringPart(uploadId));
+  public Map<String, String> getUploadParams() {
+    Map<String, String> parameters = new HashMap<>();
+    parameters.put("uri", uri);
+    parameters.put("region", region);
+    parameters.put("upload_id", uploadId);
     return parameters;
   }
 

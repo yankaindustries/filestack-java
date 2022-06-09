@@ -2,17 +2,17 @@ package com.filestack.internal;
 
 import com.filestack.FileLink;
 import com.filestack.internal.responses.CompleteResponse;
-import io.reactivex.Flowable;
-import okhttp3.RequestBody;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.reactivex.Flowable;
+
 import java.util.concurrent.Callable;
 
 /**
  * Function to be passed to {@link Flowable#fromCallable(Callable)}.
  * Handles completing a multipart upload, gets metadata for final file.
- * In intelligent ingestion mode the {@link UploadService#complete(Map)} call may return a
+ * In intelligent ingestion mode the {@link UploadService#complete(JsonObject)} call may return a
  * 202 response while the parts are still processing. In this case the {@link RetryNetworkFunc}
  * will handle it like a failure and automatically retry.
  */
@@ -28,16 +28,23 @@ public class UploadCompleteFunc implements Callable<Prog> {
   @Override
   public Prog call() throws Exception {
     final long startTime = System.currentTimeMillis() / 1000;
-    final Map<String, RequestBody> params = new HashMap<>(upload.baseParams);
+    final JsonObject params = upload.baseParams.deepCopy();
 
     if (!upload.intel) {
-      StringBuilder builder = new StringBuilder();
+      JsonArray jsonArray = new JsonArray();
       for (int i = 0; i < upload.etags.length; i++) {
-        builder.append(i + 1).append(':').append(upload.etags[i]).append(';');
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("part_number", i + 1);
+        jsonObject.addProperty("etag", upload.etags[i]);
+        jsonArray.add(jsonObject);
       }
-      builder.deleteCharAt(builder.length() - 1);
-      String parts = builder.toString();
-      params.put("parts", Util.createStringPart(parts));
+      params.add("parts", jsonArray);
+    }
+
+    if (upload.uploadTags != null && !upload.uploadTags.isEmpty()) {
+      JsonObject uploadJson = new JsonObject();
+      upload.uploadTags.forEach(uploadJson::addProperty);
+      params.add("upload_tags", uploadJson);
     }
 
     RetryNetworkFunc<CompleteResponse> func;

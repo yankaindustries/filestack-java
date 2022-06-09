@@ -2,12 +2,15 @@ package com.filestack;
 
 import com.filestack.internal.Util;
 import com.filestack.transforms.TransformTask;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import okhttp3.RequestBody;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Configure storage options for uploads and transformation stores. */
@@ -23,6 +26,7 @@ public class StorageOptions implements Serializable {
   private String mimeType;
   private String path;
   private String region;
+  private List<String> workflows;
 
   // Private to enforce use of the builder
   private StorageOptions() { }
@@ -51,16 +55,22 @@ public class StorageOptions implements Serializable {
     task.addOption("location", location);
     task.addOption("path", path);
     task.addOption("region", region);
+    task.addOption("workflows", workflows);
   }
 
   /** Get these options as a part map to use for uploads. */
-  public Map<String, RequestBody> getAsPartMap() {
-    HashMap<String, RequestBody> map = new HashMap<>();
-    addToMap(map, "store_access", access);
-    addToMap(map, "store_container", container);
-    addToMap(map, "store_location", location != null ? location : "s3");
-    addToMap(map, "store_path", path);
-    addToMap(map, "store_region", region);
+  public JsonObject getAsPartMap() {
+    JsonObject map = new JsonObject();
+    addToJson(map, "access", access);
+    addToJson(map, "container", container);
+    addToJson(map, "location", location != null ? location : "s3");
+    addToJson(map, "path", path);
+    addToJson(map, "region", region);
+
+    if (workflows != null && !workflows.isEmpty()) {
+      JsonArray jsonArray = createJsonArray(workflows);
+      map.add("workflows", jsonArray);
+    }
 
     // A name and MIME type must be set for uploads, so we set a default here but not in "build"
     // If we're not using the instance for an upload, we don't want to set these defaults
@@ -75,8 +85,6 @@ public class StorageOptions implements Serializable {
       mimeType = DEFAULT_MIME_TYPE;
     }
 
-    addToMap(map, "filename", filename);
-    addToMap(map, "mimetype", mimeType);
     return map;
   }
 
@@ -94,6 +102,14 @@ public class StorageOptions implements Serializable {
 
   public Builder newBuilder() {
     return new Builder(this);
+  }
+
+  private static JsonArray createJsonArray(List<String> list) {
+    JsonArray jsonArray = new JsonArray();
+    for (String item : list) {
+      jsonArray.add(item);
+    }
+    return jsonArray;
   }
 
   private static void addToMap(Map<String, RequestBody> map, String key, @Nullable String value) {
@@ -118,6 +134,7 @@ public class StorageOptions implements Serializable {
     private String mimeType;
     private String path;
     private String region;
+    private List<String> workflows;
 
     public Builder() { }
 
@@ -131,6 +148,7 @@ public class StorageOptions implements Serializable {
       path = existing.path;
       region = existing.region;
       mimeType = existing.mimeType;
+      workflows = existing.workflows;
     }
 
     public Builder access(String access) {
@@ -173,6 +191,11 @@ public class StorageOptions implements Serializable {
       return this;
     }
 
+    public Builder workflows(List<String> workflows) {
+      this.workflows = new ArrayList<>(workflows);
+      return this;
+    }
+
     /**
      * Builds new {@link StorageOptions}.
      */
@@ -187,6 +210,7 @@ public class StorageOptions implements Serializable {
       building.mimeType = mimeType;
       building.path = path;
       building.region = region;
+      building.workflows = workflows;
 
       return building;
     }

@@ -1,6 +1,8 @@
 package com.filestack.internal;
 
 import com.filestack.internal.responses.UploadResponse;
+import com.google.gson.JsonObject;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
@@ -8,7 +10,6 @@ import io.reactivex.FlowableOnSubscribe;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -49,13 +50,12 @@ public class UploadTransferFunc implements FlowableOnSubscribe<Prog> {
     byte[] md5 = Hash.md5(container.data, container.sent, size);
     String encodedMd5 = Util.base64(md5);
 
-    final HashMap<String, RequestBody> params = new HashMap<>();
-    params.putAll(upload.baseParams);
-    params.put("part", Util.createStringPart(Integer.toString(container.num)));
-    params.put("size", Util.createStringPart(Integer.toString(size)));
-    params.put("md5", Util.createStringPart(encodedMd5));
+    final JsonObject params = upload.baseParams.deepCopy();
+    params.addProperty("part", container.num);
+    params.addProperty("size", size);
+    params.addProperty("md5", encodedMd5);
     if (upload.intel) {
-      params.put("offset", Util.createStringPart(Integer.toString(container.sent)));
+      params.addProperty("offset", container.sent);
     }
 
     RetryNetworkFunc<UploadResponse> func;
@@ -123,9 +123,8 @@ public class UploadTransferFunc implements FlowableOnSubscribe<Prog> {
 
   /** For intelligent ingestion mode only. Called when all chunks of a part have been uploaded. */
   private void multipartCommit() throws Exception {
-    final HashMap<String, RequestBody> params = new HashMap<>();
-    params.putAll(upload.baseParams);
-    params.put("part", Util.createStringPart(Integer.toString(container.num)));
+    final JsonObject params = upload.baseParams.deepCopy();
+    params.addProperty("part", container.num);
 
     RetryNetworkFunc<ResponseBody> func;
     func = new RetryNetworkFunc<ResponseBody>(5, 5, Upload.DELAY_BASE) {
