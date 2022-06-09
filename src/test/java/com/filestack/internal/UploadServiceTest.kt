@@ -5,6 +5,7 @@ import com.filestack.internal.responses.CompleteResponse
 import com.filestack.internal.responses.StartResponse
 import com.filestack.internal.responses.UploadResponse
 import com.filestack.tempFile
+import com.google.gson.JsonObject
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
@@ -27,11 +28,11 @@ class UploadServiceTest {
     fun start() {
         val file = tempFile(sizeInBytes = 1024)
 
-        val baseParams = mutableMapOf<String, RequestBody>()
-        baseParams["apikey"] = Util.createStringPart("api_key")
-        baseParams["size"] = Util.createStringPart(file.length().toString())
-        baseParams["policy"] = Util.createStringPart("my_policy")
-        baseParams["signature"] = Util.createStringPart("my_signature")
+        val baseParams = JsonObject()
+        baseParams.addProperty("apikey", "api_key")
+        baseParams.addProperty("size", file.length())
+        baseParams.addProperty("policy", "my_policy")
+        baseParams.addProperty("signature", "my_signature")
 
         uploadService.start(baseParams)
 
@@ -59,14 +60,14 @@ class UploadServiceTest {
         val type = URLConnection.guessContentTypeFromName(fileToUpload.name)
         val requestBody = RequestBody.create(MediaType.get(type), fileToUpload)
 
-        val params = mutableMapOf<String, RequestBody>()
-        params["apikey"] = Util.createStringPart("api_key")
-        params["size"] = Util.createStringPart(fileToUpload.length().toString())
-        params["policy"] = Util.createStringPart("my_policy")
-        params["signature"] = Util.createStringPart("my_signature")
-        params["content"] = requestBody
+        val baseParams = JsonObject()
+        baseParams.addProperty("apikey", "api_key")
+        baseParams.addProperty("size", fileToUpload.length())
+        baseParams.addProperty("policy", "my_policy")
+        baseParams.addProperty("signature", "my_signature")
+//        baseParams.addProperty("content", requestBody)
 
-        uploadService.upload(params)
+        uploadService.upload(baseParams)
 
         val argumentCaptor = ArgumentCaptor.forClass(okhttp3.Request::class.java)
         verify(networkClient).call(argumentCaptor.capture(), eq(UploadResponse::class.java))
@@ -123,11 +124,11 @@ class UploadServiceTest {
     fun commit() {
         val file = tempFile(sizeInBytes = 1024)
 
-        val baseParams = mutableMapOf<String, RequestBody>()
-        baseParams["apikey"] = Util.createStringPart("api_key")
-        baseParams["size"] = Util.createStringPart(file.length().toString())
-        baseParams["policy"] = Util.createStringPart("my_policy")
-        baseParams["signature"] = Util.createStringPart("my_signature")
+        val baseParams = JsonObject()
+        baseParams.addProperty("apikey", "api_key")
+        baseParams.addProperty("size", file.length())
+        baseParams.addProperty("policy", "my_policy")
+        baseParams.addProperty("signature", "my_signature")
 
         uploadService.commit(baseParams)
 
@@ -153,11 +154,11 @@ class UploadServiceTest {
     fun complete() {
         val file = tempFile(sizeInBytes = 1024)
 
-        val baseParams = mutableMapOf<String, RequestBody>()
-        baseParams["apikey"] = Util.createStringPart("api_key")
-        baseParams["size"] = Util.createStringPart(file.length().toString())
-        baseParams["policy"] = Util.createStringPart("my_policy")
-        baseParams["signature"] = Util.createStringPart("my_signature")
+        val baseParams = JsonObject()
+        baseParams.addProperty("apikey", "api_key")
+        baseParams.addProperty("size", file.length())
+        baseParams.addProperty("policy", "my_policy")
+        baseParams.addProperty("signature", "my_signature")
 
         uploadService.complete(baseParams)
 
